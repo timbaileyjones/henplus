@@ -1487,7 +1487,7 @@ public class DumpCommand extends AbstractCommand implements Interruptable {
             }
             _workingStatement = _session.createStatement();
             try {
-                _workingStatement.setFetchSize(1000);
+                // _workingStatement.setFetchSize(1000);
             } catch (final Exception e) {
                 // ignore
             }
@@ -1589,7 +1589,7 @@ public class DumpCommand extends AbstractCommand implements Interruptable {
             }
             _workingStatement = _session.createStatement();
             try {
-                _workingStatement.setFetchSize(1000);
+                // _workingStatement.setFetchSize(1000);
             } catch (final Exception e) {
                 // ignore
             }

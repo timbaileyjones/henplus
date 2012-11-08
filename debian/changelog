@@ -1,3 +1,10 @@
+henplus (0.9.7.ds1-3-vertica-fix) unstable; urgency=low
+
+  * commented out st.setFetchSize() hints.  They were causing Vertica JDBC driver to give an
+    error saying "C_2" cursor already exists. 
+    
+ -- Tim Jones <tim@timjones.com>  Thu, 08 Nov 2012 10:51:41 -0400
+
 henplus (0.9.7.ds1-2) unstable; urgency=low
 
   * debian/packages, 020-library_version.patch, 

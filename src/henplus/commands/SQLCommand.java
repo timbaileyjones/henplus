@@ -225,7 +225,7 @@ public final class SQLCommand extends AbstractCommand {
             } else {
                 _stmt = session.createStatement();
                 try {
-                    _stmt.setFetchSize(200);
+                    // _stmt.setFetchSize(200);
                 } catch (final Exception e) {
                     /* ignore */
                 }
