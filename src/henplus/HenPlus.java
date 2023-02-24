@@ -189,8 +189,6 @@ public final class HenPlus implements Interruptable {
 
         _dispatcher.register(new SystemInfoCommand());
 
-        _dispatcher.register(new ReadlineCommands());
-
         pluginCommand.load();
         aliasCommand.load();
         propertyCommand.load();
