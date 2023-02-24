@@ -1,5 +1,7 @@
 src/henplus/Version.java
-/.eclipse-bin
-/build
-/.settings
+.eclipse-bin
+build
+.settings
 .ant-targets-build.xml
+classes/
+.idea/

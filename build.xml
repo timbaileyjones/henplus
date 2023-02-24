@@ -5,8 +5,8 @@
      <property name="DESTDIR"              value="/" />
 
      <!-- properties -->
-     <property name="version"              value="0.9.9" />
-     <property name="title"                value="Friendly Fire" />
+     <property name="version"              value="0.10.0" />
+     <property name="title"                value="A New Hope" />
      <property name="src"                  value="src" />
      <property name="bin"                  value="bin" />
      <property name="lib"                  value="lib" />
@@ -20,11 +20,15 @@
      <!-- libs -->
      <property name="commons-cli" value="commons-cli-1.2.jar"/>
      <property name="libreadline-java" value="libreadline-java-0.8.1.jar"/>
+     <property name="jline-reader" value="jline-reader-3.22.0.jar"/>
+     <property name="jline-terminal" value="jline-terminal-3.22.0.jar"/>
 
      <path id="compile.classpath">
         <fileset dir="${lib}">
            <include name="${libreadline-java}"/>
            <include name="${commons-cli}"/>
+           <include name="${jline-reader}" />
+           <include name="${jline-terminal}" />
         </fileset>
      </path>
 
@@ -62,7 +66,7 @@
 
      <target name="compile" depends="prepare,Version.java" 
 	     description="compile it">
-        <javac debug="true" source="1.5" target="1.5" 
+        <javac debug="true" source="1.8" target="1.8"
 	       encoding="ISO-8859-1" srcdir="${src}" destdir="${classes}">
            <classpath refid="compile.classpath" />
         </javac>

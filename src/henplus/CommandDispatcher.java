@@ -1,6 +1,6 @@
 /*
  * This is free software, licensed under the Gnu Public License (GPL) get a copy from <http://www.gnu.org/licenses/gpl.html>
- * 
+ *
  * author: Henner Zeller <H.Zeller@acm.org>
  */
 package henplus;
@@ -17,12 +17,15 @@ import java.util.SortedMap;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-import org.gnu.readline.ReadlineCompleter;
+import org.jline.reader.Candidate;
+import org.jline.reader.Completer;
+import org.jline.reader.LineReader;
+import org.jline.reader.ParsedLine;
 
 /**
  * The Command Dispatcher for all commands.
  */
-public class CommandDispatcher implements ReadlineCompleter {
+public class CommandDispatcher implements Completer {
 
     private static final boolean VERBOSE = false; // debug
     private final List<Command> _commands; // commands in seq. of addition.
@@ -177,7 +180,7 @@ public class CommandDispatcher implements ReadlineCompleter {
 
     /**
      * Add an execution listener that is informed whenever a command is executed.
-     * 
+     *
      * @param listener
      *            an Execution Listener
      */
@@ -189,7 +192,7 @@ public class CommandDispatcher implements ReadlineCompleter {
 
     /**
      * remove an execution listener.
-     * 
+     *
      * @param listener
      *            the execution listener to be removed
      * @return true, if this has been successful.
@@ -280,16 +283,17 @@ public class CommandDispatcher implements ReadlineCompleter {
         }
     }
 
-    private Iterator<String> _possibleValues;
-    private String _variablePrefix;
+    // -- Jline completer ..
 
-    // -- Readline completer ..
     @Override
-    public String completer(String text, final int state) {
+    public void complete(LineReader lineReader, ParsedLine parsedLine, List<Candidate> list) {
         final HenPlus henplus = HenPlus.getInstance();
-        final String completeCommandString = henplus.getPartialLine().trim();
+        final String completeCommandString = parsedLine.line();
         boolean variableExpansion = false;
 
+        Iterator<String> possibleCompletions;
+
+        String text = parsedLine.word();
         /*
          * ok, do we have a variable expansion ?
          */
@@ -306,25 +310,23 @@ public class CommandDispatcher implements ReadlineCompleter {
         }
 
         if (variableExpansion) {
-            if (state == 0) {
-                _variablePrefix = text.substring(0, pos);
-                final String varname = text.substring(pos);
-                _possibleValues = _setCommand.completeUserVar(varname);
+            String variablePrefix = text.substring(0, pos);
+            final String varname = text.substring(pos);
+            possibleCompletions = _setCommand.completeUserVar(varname);
+            while (possibleCompletions != null && possibleCompletions.hasNext()) {
+                list.add(new Candidate(variablePrefix + possibleCompletions.next()));
             }
-            if (_possibleValues.hasNext()) {
-                return _variablePrefix + _possibleValues.next();
-            }
-            return null;
+            return;
         } else if (completeCommandString.equals(text)) {
             /*
              * the first word.. the command.
              */
             text = text.toLowerCase();
-            if (state == 0) {
-                _possibleValues = getRegisteredCommandNames(text);
-            }
-            while (_possibleValues.hasNext()) {
-                final String nextKey = _possibleValues.next();
+
+            possibleCompletions = getRegisteredCommandNames(text);
+
+            while (possibleCompletions != null && possibleCompletions.hasNext()) {
+                final String nextKey = possibleCompletions.next();
                 if (nextKey.length() == 0) {
                     continue;
                 }
@@ -338,26 +340,22 @@ public class CommandDispatcher implements ReadlineCompleter {
                     }
                 }
                 if (nextKey.startsWith(text)) {
-                    return nextKey;
+                    list.add(new Candidate(nextKey));
                 }
-                return null;
             }
-            return null;
         } else {
             /*
              * .. otherwise get completion from the specific command.
              */
-            if (state == 0) {
-                final Command cmd = getCommandFrom(completeCommandString);
-                if (cmd == null) {
-                    return null;
-                }
-                _possibleValues = cmd.complete(this, completeCommandString, text);
+            final Command cmd = getCommandFrom(completeCommandString);
+            if (cmd == null) {
+                return;
             }
-            if (_possibleValues != null && _possibleValues.hasNext()) {
-                return _possibleValues.next();
+            possibleCompletions = cmd.complete(this, completeCommandString, text);
+
+            while (possibleCompletions != null && possibleCompletions.hasNext()) {
+                list.add(new Candidate(possibleCompletions.next()));
             }
-            return null;
         }
     }
 }
