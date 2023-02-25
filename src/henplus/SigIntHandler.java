@@ -10,13 +10,12 @@ package henplus;
 import java.util.ListIterator;
 import java.util.Stack;
 
-import sun.misc.Signal;
-import sun.misc.SignalHandler;
+import org.jline.terminal.Terminal;
 
 /**
  * Signal handler, that reacts on CTRL-C.
  */
-public class SigIntHandler implements SignalHandler, InterruptHandler {
+public class SigIntHandler implements Terminal.SignalHandler, InterruptHandler {
 
     private static InterruptHandler dummyHandler = new InterruptHandler() {
 
@@ -37,23 +36,18 @@ public class SigIntHandler implements SignalHandler, InterruptHandler {
     private static SigIntHandler instance = null;
     private final Stack<Interruptable> _toInterruptStack;
 
-    public static void install() {
-        final Signal interruptSignal = new Signal("INT"); // Interrupt: Ctrl-C
-        instance = new SigIntHandler();
-        // don't care about the original handler.
-        Signal.handle(interruptSignal, instance);
-    }
-
     public static InterruptHandler getInstance() {
-        if (instance == null) {
-            return dummyHandler;
-        }
         return instance;
     }
 
-    public SigIntHandler() {
+    public static Terminal.SignalHandler getHandler() {
+        return instance;
+    }
+
+    private SigIntHandler() {
         _once = false;
-        _toInterruptStack = new Stack<Interruptable>();
+        _toInterruptStack = new Stack<>();
+        instance = new SigIntHandler();
     }
 
     @Override
@@ -74,7 +68,7 @@ public class SigIntHandler implements SignalHandler, InterruptHandler {
     }
 
     @Override
-    public void handle(final Signal sig) {
+    public void handle(Terminal.Signal signal) {
         if (_once) {
             // got the interrupt more than once. May happen if you press
             // Ctrl-C multiple times .. or with broken thread lib on Linux.

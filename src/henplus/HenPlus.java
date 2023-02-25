@@ -90,8 +90,6 @@ public final class HenPlus implements Interruptable {
 
         HenplusLineParser parser = new HenplusLineParser();
         Terminal terminal = TerminalBuilder.builder().build();
-        // TODO: use Jline signal handler
-        // terminal.handle(Terminal.Signal.INT, signal -> executeThread.interrupt());
 
         LineReaderBuilder lineReaderBuilder = LineReaderBuilder.builder()
             .terminal(terminal)
@@ -118,6 +116,30 @@ public final class HenPlus implements Interruptable {
 
         initializeCommands(argv);
         readCommandLineOptions(argv);
+
+        /* FIXME: do this platform independently */
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+
+            @Override
+            public void run() {
+                shutdown();
+            }
+        });
+        /*
+         * if your compiler/system/whatever does not support the sun.misc.
+         * classes, then just disable this call and the SigIntHandler class.
+         */
+        terminal.handle(Terminal.Signal.INT, SigIntHandler.getHandler());
+
+        /*
+         * TESTING for ^Z support in the shell. sun.misc.SignalHandler stoptest
+         * = new sun.misc.SignalHandler () { public void handle(sun.misc.Signal
+         * sig) { System.out.println("caught: " + sig); } }; try {
+         * sun.misc.Signal.handle(new sun.misc.Signal("TSTP"), stoptest); }
+         * catch (Exception e) { // ignore. }
+         *
+         * end testing
+         */
 
         Path historyPath = new File(getConfigDir(), "history-jline").toPath();
         parser.dispatcher(_dispatcher);
@@ -192,35 +214,6 @@ public final class HenPlus implements Interruptable {
         pluginCommand.load();
         aliasCommand.load();
         propertyCommand.load();
-
-        /* FIXME: do this platform independently */
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-
-            @Override
-            public void run() {
-                shutdown();
-            }
-        });
-        /*
-         * if your compiler/system/whatever does not support the sun.misc.
-         * classes, then just disable this call and the SigIntHandler class.
-         */
-        // TODO: use JLine signal handler
-        try {
-            SigIntHandler.install();
-        } catch (final Throwable t) {
-            // ignore.
-        }
-
-        /*
-         * TESTING for ^Z support in the shell. sun.misc.SignalHandler stoptest
-         * = new sun.misc.SignalHandler () { public void handle(sun.misc.Signal
-         * sig) { System.out.println("caught: " + sig); } }; try {
-         * sun.misc.Signal.handle(new sun.misc.Signal("TSTP"), stoptest); }
-         * catch (Exception e) { // ignore. }
-         * 
-         * end testing
-         */
     }
 
     /**
