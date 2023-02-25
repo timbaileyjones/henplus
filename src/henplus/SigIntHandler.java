@@ -33,7 +33,7 @@ public class SigIntHandler implements Terminal.SignalHandler, InterruptHandler {
     };
 
     private boolean _once;
-    private static SigIntHandler instance = null;
+    private static SigIntHandler instance = new SigIntHandler();
     private final Stack<Interruptable> _toInterruptStack;
 
     public static InterruptHandler getInstance() {
@@ -47,7 +47,6 @@ public class SigIntHandler implements Terminal.SignalHandler, InterruptHandler {
     private SigIntHandler() {
         _once = false;
         _toInterruptStack = new Stack<>();
-        instance = new SigIntHandler();
     }
 
     @Override

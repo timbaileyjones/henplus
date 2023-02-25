@@ -26,8 +26,10 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.PosixParser;
+import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
+import org.jline.reader.UserInterruptException;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 
@@ -390,7 +392,7 @@ public final class HenPlus implements Interruptable {
 
             try {
                 cmdLine = _fromTerminal ? _lineReader.readLine(displayPrompt) : readlineFromFile();
-            } catch (final EOFException e) {
+            } catch (final EndOfFileException e) {
                 // EOF on CTRL-D
                 if (_sessionManager.getCurrentSession() != null) {
                     _dispatcher.execute(_sessionManager.getCurrentSession(), "disconnect");
@@ -399,13 +401,16 @@ public final class HenPlus implements Interruptable {
                 } else {
                     break; // last session closed -> exit.
                 }
+            } catch (final UserInterruptException e) {
+                // CTRL-C
+                _interrupted = true;
             } catch (final Exception e) {
                 if (_verbose) {
                     e.printStackTrace();
                 }
+            } finally {
+                SigIntHandler.getInstance().reset();
             }
-
-            SigIntHandler.getInstance().reset();
 
             // anyone pressed CTRL-C
             if (_interrupted) {
