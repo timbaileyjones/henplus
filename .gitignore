@@ -5,3 +5,8 @@ build
 .ant-targets-build.xml
 classes/
 .idea/
+*.iml
+history
+*.tar.gz
+.project
+.DS_Store

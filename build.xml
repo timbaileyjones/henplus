@@ -100,6 +100,44 @@
 	        todir="${DESTDIR}/${prefix}/share/henplus" />
      </target>
 
+     <target name="package" depends="jar"
+              description="create an installable package">
+       <mkdir dir="${tarbase}" />
+       <copy todir="${tarbase}">
+          <fileset dir=".">
+            <include name="${bin}/**" />
+            <include name="doc/**" />
+	         <include name="README"/>
+	         <include name="COPYING"/>
+	         <exclude name="**/CVS" />
+	         <exclude name="**/*.class" />
+	         <!--exclude name="**/*.jar" /-->
+	         <exclude name="**/*~" />
+          </fileset>
+       </copy>
+
+       <copy todir="${tarbase}/share/henplus">
+          <fileset dir="${lib}">
+             <include name="*.jar"/>
+          </fileset>
+       </copy>
+
+       <tar tarfile="${tarbase}.tar">
+         <tarfileset dir="." mode="755">
+           <include name="${tarbase}/bin/henplus" />
+         </tarfileset>
+         <tarfileset dir=".">
+           <include name="${tarbase}/**"/>
+           <exclude name="${tarbase}/bin/henplus" />
+           <exclude name="${tarbase}/bin/" />
+         </tarfileset>
+       </tar>
+       <gzip zipfile="${tarbase}.tar.gz" src="${tarbase}.tar" />
+
+       <delete file="${tarbase}.tar" />
+       <delete dir="${tarbase}"/>
+      </target>
+
      <target name="henplus.spec" description="create RPM spec file">
        <filter token="HENPLUS_VERSION" value="${version}"/>
        <copy file="henplus.spec.in"
