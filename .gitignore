@@ -10,3 +10,4 @@ history
 *.tar.gz
 .project
 .DS_Store
+.fleet/
