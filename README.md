@@ -131,24 +131,35 @@ build is a follow-up, not yet done.
 If you've created packages for other operating systems (like Solaris) or Windows, please 
 <a href="mailto:henplus@googlgroups.com">let us know</a>.
 
+### Testing
+
+    $ mvn test
+
+runs the unit tests (`src/test/java/**/*Test.java`) - pure logic, no network or database access, so
+these always run as part of a normal build.
+
+    $ mvn verify
+
+additionally runs the end-to-end tests (`src/test/java/**/*IT.java`), which connect to real databases to
+confirm the JDBC drivers actually work. Since that needs real credentials, they're read from a properties
+file that lives outside this repository, at `~/.config/henplus/e2e-connectstrings.properties`, and are
+never committed. Each database you want covered gets three keys, grouped by a name of your choosing:
+
+    postgres.url=jdbc:postgresql://localhost:5432/postgres
+    postgres.username=postgres
+    postgres.password=secret
+
+    sqlite.url=jdbc:sqlite:/tmp/henplus-e2e-test.db
+
+(`username`/`password` are optional - SQLite needs neither.) If this file doesn't exist, `mvn verify`
+still succeeds; it just prints a warning and skips with an invitation to add one.
+
 Running
 -------
 
 You can start HenPlus with the `henplus` shell script with or without an jdbc-url on the command line.
 
     $ henplus jdbc:mysql://localhost/foobar
-
-### Make sure, command line editing is enabled
-
-If the first line, henplus writes reads:
-
-    no readline found (no JavaReadline in java.library.path). Using simple stdin.
-
-then, the JNI-part of the readline library could not be found, so command line editing is disabled because henplus then reads
-from stdin as fallback. This happens if the `LD_LIBRARY_PATH` does not point to the JNI library; edit the `/usr/bin/henplus`
-shellscript so that the `LD_LIBRARY_PATH` contains the directory where `libJavaReadline.so` resides.
-
-For RedHat and Debian you can just install the `libreadline-java` package.
 
 ### First steps
 
