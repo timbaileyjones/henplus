@@ -122,11 +122,10 @@ redistribution, so nothing under `drivers/` should ever end up committed to this
 For a database not in that list, drop the driver jar into `~/.henplus/lib/` (or any `.henplus/lib`
 directory found by walking up from your current directory) and `bin/henplus` will pick it up the same way.
 
-If you are root, you can still install a system-wide package (`/usr/bin/henplus` and
-`/usr/share/henplus/henplus.jar`) via the original Ant build (`ant install`, or `ant -Dprefix=/usr/local
-install` for a different prefix) - `build.xml` is kept around for now because the Debian (`debian/rules`)
-and RPM (`henplus.spec.in`) packaging scripts still invoke it directly. Migrating those to the Maven
-build is a follow-up, not yet done.
+The Debian (`debian/rules`) and RPM (`henplus.spec.in`) packaging scripts build with `mvn package` and
+then install `bin/henplus`, `build/henplus.jar` and `lib/*.jar` into `/usr/bin` and `/usr/share/henplus`
+directly, the same layout the old `ant install` target produced - there's no more `build.xml`/Ant
+anywhere in this repository.
 
 If you've created packages for other operating systems (like Solaris) or Windows, please 
 <a href="mailto:henplus@googlgroups.com">let us know</a>.

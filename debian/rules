@@ -115,18 +115,9 @@ debian/build-stamp: debian/build-arch-stamp debian/build-indep-stamp
 	  && export DEB_BUILD_GNU_TYPE="$(DEB_BUILD_GNU_TYPE)" \
 	  && export DEB_BUILD_GNU_SYSTEM="$(DEB_BUILD_GNU_SYSTEM)" && (\
 	echo -E 'eval "yada () { perl $$(which yada) \"\$$@\"; }"; set -e; set -v';\
-	echo -E 'export JAVA_HOME=/usr/lib/jvm/java-gcj';\
 	echo -E 'unset JAVA JAVAC JAVACMD CLASSPATH';\
 	echo -E '';\
-	echo -E 'ANT_OPTS="-Dbuild.compiler=extJavac"';\
-	echo -E '';\
-	echo -E 'ANT="ant $$ANT_OPTS"';\
-	echo -E '';\
-	echo -E 'ln -s /usr/share/java/libreadline-java.jar lib';\
-	echo -E 'ln -s /usr/share/java/commons-cli.jar lib';\
-	echo -E '';\
-	echo -E 'jdk_version=`dpkg -s java-gcj-compat-dev | grep ^Version: | sed '\''s/.*: //'\''`';\
-	echo -E 'LC_ALL=C $$ANT -Ddebian.version=$${VERSION##*-} -Ddebian.jdk=java-gcj-compat-dev -Ddebian.jdk.version=$$jdk_version jar';\
+	echo -E 'LC_ALL=C mvn -q -Dmaven.repo.local=$$(pwd)/debian/.m2-repo package';\
 	echo -E '';\
 	echo -E 'for pod in debian/man/*.pod; do';\
 	echo -E '    eval pod2man $$(head -n1 $$pod | sed '\''s/^# pod2man //'\'') $$pod \';\
@@ -172,14 +163,13 @@ debian/tmp-henplus/DEBIAN/control: debian/build-stamp debian/control
 	  && export DEB_BUILD_GNU_TYPE="$(DEB_BUILD_GNU_TYPE)" \
 	  && export DEB_BUILD_GNU_SYSTEM="$(DEB_BUILD_GNU_SYSTEM)" && (\
 	echo -E 'eval "yada () { perl $$(which yada) \"\$$@\"; }"; set -e; set -v';\
-	echo -E 'export JAVA_HOME=/usr/lib/jvm/java-gcj';\
 	echo -E 'unset JAVA JAVAC JAVACMD CLASSPATH';\
 	echo -E '';\
-	echo -E 'ANT_OPTS="-Dbuild.compiler=extJavac"';\
-	echo -E '';\
-	echo -E 'ANT="ant $$ANT_OPTS"';\
-	echo -E '';\
-	echo -E 'LC_ALL=C $$ANT install -DDESTDIR=$$ROOT';\
+	echo -E 'install -d -m 755 $$ROOT/usr/bin';\
+	echo -E 'install -d -m 755 $$ROOT/usr/share/henplus';\
+	echo -E 'install -m 755 bin/henplus $$ROOT/usr/bin/henplus';\
+	echo -E 'install -m 644 build/henplus.jar $$ROOT/usr/share/henplus/henplus.jar';\
+	echo -E 'install -m 644 lib/*.jar $$ROOT/usr/share/henplus/';\
 	echo -E '';\
 	echo -E 'yada install -script debian/scripts/henplus';\
 	echo -E '';\
@@ -257,16 +247,9 @@ clean-build:
 	  && export DEB_BUILD_GNU_TYPE="$(DEB_BUILD_GNU_TYPE)" \
 	  && export DEB_BUILD_GNU_SYSTEM="$(DEB_BUILD_GNU_SYSTEM)" && (\
 	echo -E 'eval "yada () { perl $$(which yada) \"\$$@\"; }"; set -e; set -v';\
-	echo -E 'export JAVA_HOME=/usr/lib/jvm/java-gcj';\
 	echo -E 'unset JAVA JAVAC JAVACMD CLASSPATH';\
 	echo -E '';\
-	echo -E 'ANT_OPTS="-Dbuild.compiler=extJavac"';\
-	echo -E '';\
-	echo -E 'ANT="ant $$ANT_OPTS"';\
-	echo -E '';\
-	echo -E 'LC_ALL=C $$ANT clean';\
-	echo -E '';\
-	echo -E 'rm -f lib/*.jar') | /bin/bash
+	echo -E 'LC_ALL=C mvn -q -Dmaven.repo.local=$$(pwd)/debian/.m2-repo clean') | /bin/bash
 	yada unpatch
 	rm -rf debian/tmp
 

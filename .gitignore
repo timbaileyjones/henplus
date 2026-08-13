@@ -3,8 +3,8 @@ src/main/java/henplus/Version.java
 build
 target
 drivers
+debian/.m2-repo
 .settings
-.ant-targets-build.xml
 classes/
 .idea/
 *.iml
