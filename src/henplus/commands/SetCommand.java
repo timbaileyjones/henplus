@@ -12,6 +12,7 @@ import henplus.event.ExecutionListener;
 import henplus.io.ConfigurationContainer;
 import henplus.view.Column;
 import henplus.view.ColumnMetaData;
+import henplus.view.ITableRenderer;
 import henplus.view.TableRenderer;
 import henplus.view.util.SortedMatchIterator;
 
@@ -100,7 +101,7 @@ public final class SetCommand extends AbstractCommand {
             if (argc == 0) {
                 SET_META[0].resetWidth();
                 SET_META[1].resetWidth();
-                final TableRenderer table = new TableRenderer(SET_META, HenPlus.out());
+                final ITableRenderer table = new TableRenderer(SET_META, HenPlus.out());
                 for (Entry<String,String> entry : _variables.entrySet()) {
                     final Column[] row = new Column[4];
                     row[0] = new Column(entry.getKey());

@@ -117,7 +117,7 @@ public class TimeRenderer {
         } else if (totalTime > 0 && totalTime < SECOND_MILLIS) {
             out.print(" m");
         } else if (totalTime == 0 && usec > 0) {
-            out.print(" �");
+            out.print(" µ");
         }
         out.print("sec");
     }

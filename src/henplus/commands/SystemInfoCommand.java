@@ -12,6 +12,7 @@ import henplus.HenPlus;
 import henplus.SQLSession;
 import henplus.view.Column;
 import henplus.view.ColumnMetaData;
+import henplus.view.ITableRenderer;
 import henplus.view.TableRenderer;
 import henplus.view.util.Formatter;
 
@@ -153,7 +154,7 @@ public final class SystemInfoCommand extends AbstractCommand {
 
     private void renderInfo(final Map<String, String> info) {
 
-        final TableRenderer table = new TableRenderer(DESC_META, HenPlus.out());
+        final ITableRenderer table = new TableRenderer(DESC_META, HenPlus.out());
 
         for (Entry<String,String> entry : info.entrySet()) {
             final String key = entry.getKey();

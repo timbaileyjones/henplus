@@ -12,6 +12,7 @@ import henplus.SQLSession;
 import henplus.property.PropertyHolder;
 import henplus.view.Column;
 import henplus.view.ColumnMetaData;
+import henplus.view.ITableRenderer;
 import henplus.view.TableRenderer;
 import henplus.view.util.SortedMatchIterator;
 
@@ -85,7 +86,7 @@ public abstract class AbstractPropertyCommand extends AbstractCommand {
             if (argc == 0) {
                 PROP_META[0].resetWidth();
                 PROP_META[1].resetWidth();
-                final TableRenderer table = new TableRenderer(PROP_META, HenPlus.out());
+                final ITableRenderer table = new TableRenderer(PROP_META, HenPlus.out());
                 for (Map.Entry<String, PropertyHolder> entry : getRegistry().getPropertyMap().entrySet()) {
                     final Column[] row = new Column[3];
                     final PropertyHolder holder = entry.getValue();

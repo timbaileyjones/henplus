@@ -91,6 +91,7 @@ public class SQLSession implements Interruptable {
         _propertyRegistry.registerProperty("auto-commit", new AutoCommitProperty());
         _propertyRegistry.registerProperty("read-only", new ReadOnlyProperty());
         _propertyRegistry.registerProperty("isolation-level", new IsolationLevelProperty(availableIsolations, currentIsolation));
+        _propertyRegistry.registerProperty("vertical-output", new VerticalOutputProperty());
     }
 
     private void printTransactionIsolation(final DatabaseMetaData meta, final int iLevel, final String descript, final int current)
@@ -457,6 +458,30 @@ public class SQLSession implements Interruptable {
             return "sets the transaction isolation level";
         }
     }
+
+    private class VerticalOutputProperty extends BooleanPropertyHolder {
+
+        VerticalOutputProperty() {
+            super(false);
+            propertyValue = "off"; // 'off' sounds better in this context.
+        }
+
+        @Override
+        public void booleanPropertyChanged(final boolean switchOn) throws Exception {
+            propertyValue = (switchOn) ? "on":"off";
+        }
+
+        @Override
+        public String getDefaultValue() {
+            return "off";
+        }
+
+        @Override
+        public String getShortDescription() {
+            return "Switches on vertical SQL output.";
+        }
+    }
+
 }
 
 /*

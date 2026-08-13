@@ -12,6 +12,7 @@ import henplus.SQLSession;
 import henplus.io.ConfigurationContainer;
 import henplus.view.Column;
 import henplus.view.ColumnMetaData;
+import henplus.view.ITableRenderer;
 import henplus.view.TableRenderer;
 import henplus.view.util.SortedMatchIterator;
 
@@ -121,7 +122,7 @@ public final class PluginCommand extends AbstractCommand {
             HenPlus.msg().println("loaded plugins are marked with '*'");
             DRV_META[0].resetWidth();
             DRV_META[1].resetWidth();
-            final TableRenderer table = new TableRenderer(DRV_META, HenPlus.out());
+            final ITableRenderer table = new TableRenderer(DRV_META, HenPlus.out());
             for (Entry<String,Command> entry : _plugins.entrySet()) {
                 final Column[] row = new Column[2];
                 final Command c = entry.getValue();

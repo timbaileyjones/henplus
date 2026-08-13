@@ -196,8 +196,15 @@ public final class SQLCommand extends AbstractCommand {
         String command = cmd + " " + param;
         // boolean background = false;
 
+        boolean enableVertical = session.getPropertyRegistry().getPropertyMap().get("vertical-output").getValue().equals("on");
+
         if (command.endsWith("/")) {
             command = command.substring(0, command.length() - 1);
+        }
+
+        if (command.endsWith("\\G")) {
+            command = command.substring(0, command.length() - 2);
+            enableVertical = true;
         }
 
         // if (command.endsWith("&")) {
@@ -244,7 +251,7 @@ public final class SQLCommand extends AbstractCommand {
                     do {
                         rset = _stmt.getResultSet();
                         ResultSetRenderer renderer;
-                        renderer = new ResultSetRenderer(rset, getColumnDelimiter(), isShowHeader(), isShowFooter(), getRowLimit(),
+                        renderer = new ResultSetRenderer(rset, getColumnDelimiter(), isShowHeader(), isShowFooter(), enableVertical, getRowLimit(),
                                 HenPlus.out());
                         SigIntHandler.getInstance().pushInterruptable(renderer);
                         final int rows = renderer.execute();

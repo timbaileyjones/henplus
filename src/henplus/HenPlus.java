@@ -4,27 +4,7 @@
  */
 package henplus;
 
-import henplus.commands.AboutCommand;
-import henplus.commands.AliasCommand;
-import henplus.commands.ConnectCommand;
-import henplus.commands.DescribeCommand;
-import henplus.commands.DriverCommand;
-import henplus.commands.DumpCommand;
-import henplus.commands.EchoCommand;
-import henplus.commands.ExitCommand;
-import henplus.commands.HelpCommand;
-import henplus.commands.ImportCommand;
-import henplus.commands.KeyBindCommand;
-import henplus.commands.ListUserObjectsCommand;
-import henplus.commands.LoadCommand;
-import henplus.commands.PluginCommand;
-import henplus.commands.SQLCommand;
-import henplus.commands.SetCommand;
-import henplus.commands.ShellCommand;
-import henplus.commands.SpoolCommand;
-import henplus.commands.StatusCommand;
-import henplus.commands.SystemInfoCommand;
-import henplus.commands.TreeCommand;
+import henplus.commands.*;
 import henplus.commands.properties.PropertyCommand;
 import henplus.commands.properties.SessionPropertyCommand;
 import henplus.io.ConfigurationContainer;
@@ -202,6 +182,8 @@ public final class HenPlus implements Interruptable {
         _dispatcher.register(new SessionPropertyCommand(this));
 
         _dispatcher.register(new SystemInfoCommand());
+
+        _dispatcher.register(new ReadlineCommands());
 
         pluginCommand.load();
         aliasCommand.load();
@@ -602,7 +584,7 @@ public final class HenPlus implements Interruptable {
             }
 
             endpos = pos + 1;
-            while (endpos < in.length() && Character.isJavaIdentifierPart(in.charAt(endpos))) {
+            while (endpos < in.length() && (Character.isJavaIdentifierPart(in.charAt(endpos)) || in.charAt(endpos) == '.')) {
                 endpos++;
             }
             varname = in.substring(pos + 1, endpos);

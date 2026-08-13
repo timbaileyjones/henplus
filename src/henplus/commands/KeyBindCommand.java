@@ -12,6 +12,7 @@ import henplus.SQLSession;
 import henplus.io.ConfigurationContainer;
 import henplus.view.Column;
 import henplus.view.ColumnMetaData;
+import henplus.view.ITableRenderer;
 import henplus.view.TableRenderer;
 import henplus.view.util.NameCompleter;
 
@@ -206,7 +207,7 @@ public class KeyBindCommand extends AbstractCommand {
     private void showKeyBindings() {
         DRV_META[0].resetWidth();
         DRV_META[1].resetWidth();
-        final TableRenderer table = new TableRenderer(DRV_META, HenPlus.out());
+        final ITableRenderer table = new TableRenderer(DRV_META, HenPlus.out());
         for (Entry<String,String> entry : _bindings.entrySet()) {
             final Column[] row = new Column[2];
             row[0] = new Column(entry.getKey());

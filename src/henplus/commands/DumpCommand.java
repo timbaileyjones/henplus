@@ -19,6 +19,7 @@ import henplus.util.DependencyResolver;
 import henplus.util.DependencyResolver.ResolverResult;
 import henplus.view.Column;
 import henplus.view.ColumnMetaData;
+import henplus.view.ITableRenderer;
 import henplus.view.TableRenderer;
 import henplus.view.util.CancelWriter;
 import henplus.view.util.NameCompleter;
@@ -1228,7 +1229,7 @@ public class DumpCommand extends AbstractCommand implements Interruptable {
         HenPlus.out().println();
         META_HEADERS[0].resetWidth();
         META_HEADERS[1].resetWidth();
-        final TableRenderer table = new TableRenderer(META_HEADERS, HenPlus.out());
+        final ITableRenderer table = new TableRenderer(META_HEADERS, HenPlus.out());
         for (int i = 0; i < prop.length; ++i) {
             final Column[] row = new Column[3];
             row[0] = new Column(prop[i].getFieldName());

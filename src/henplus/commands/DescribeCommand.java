@@ -14,6 +14,7 @@ import henplus.SigIntHandler;
 import henplus.logging.Logger;
 import henplus.view.Column;
 import henplus.view.ColumnMetaData;
+import henplus.view.ITableRenderer;
 import henplus.view.TableRenderer;
 
 import java.sql.DatabaseMetaData;
@@ -307,7 +308,7 @@ public class DescribeCommand extends AbstractCommand implements Interruptable {
                      */
                     DESC_META[1].setDisplay(!allSameTableName);
                     DESC_META[8].setDisplay(anyDescription);
-                    final TableRenderer table = new TableRenderer(DESC_META, HenPlus.out());
+                    final ITableRenderer table = new TableRenderer(DESC_META, HenPlus.out());
                     final Iterator<Column[]> it = rows.iterator();
                     while (it.hasNext()) {
                         table.addRow(it.next());

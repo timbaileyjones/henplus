@@ -1,6 +1,6 @@
 /*
  * This is free software, licensed under the Gnu Public License (GPL) get a copy from <http://www.gnu.org/licenses/gpl.html> $Id:
- * TableRenderer.java,v 1.7 2005-06-18 04:58:13 hzeller Exp $ author: Henner Zeller <H.Zeller@acm.org>
+ * StandardTableRenderer.java,v 1.7 2005-06-18 04:58:13 hzeller Exp $ author: Henner Zeller <H.Zeller@acm.org>
  */
 package henplus.view;
 
@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * document me.
  */
-public class TableRenderer implements ITableRenderer {
+public class VerticalTableRenderer implements ITableRenderer {
 
     private static final int MAX_CACHE_ELEMENTS = 500;
 
@@ -23,14 +23,20 @@ public class TableRenderer implements ITableRenderer {
 
     private final boolean _enableHeader;
     private final boolean _enableFooter;
+    private boolean _hasRows = false;
 
     protected final ColumnMetaData[] meta;
+    protected final ColumnMetaData[] colMeta;
     protected final OutputDevice out;
     protected final String colSeparator;
 
-    public TableRenderer(final ColumnMetaData[] meta, final OutputDevice out, final String separator, final boolean enableHeader,
-                         final boolean enableFooter) {
-        this.meta = meta;
+    public VerticalTableRenderer(final ColumnMetaData[] meta, final OutputDevice out, final String separator, final boolean enableHeader,
+            final boolean enableFooter) {
+        this.colMeta = meta;
+        this.meta = new ColumnMetaData[2];
+        this.meta[0] = new ColumnMetaData("* field *");
+        this.meta[1] = new ColumnMetaData("* value *");
+
         this.out = out;
         _enableHeader = enableHeader;
         _enableFooter = enableFooter;
@@ -44,15 +50,36 @@ public class TableRenderer implements ITableRenderer {
         _writtenRows = 0;
         this.colSeparator = " " + separator;
         _separatorWidth = separator.length();
+        //HenPlus.getInstance().getCurrentSession().getPropertyRegistry().getPropertyMap().get(out)
     }
 
-    public TableRenderer(final ColumnMetaData[] meta, final OutputDevice out) {
+    public VerticalTableRenderer(final ColumnMetaData[] meta, final OutputDevice out) {
         this(meta, out, "|", true, true);
     }
 
+
+    protected void addColumnAsRow(String label, Column column) {
+            Column columnMeta = new Column(label);
+
+            Column[] vertRow = new Column[2];
+            vertRow[0] = columnMeta;
+            vertRow[1] = column;
+            updateColumnWidths(vertRow);
+            addRowToCache(vertRow);
+    }
+
     public void addRow(final Column[] row) {
-        updateColumnWidths(row);
-        addRowToCache(row);
+        if (_hasRows)
+            addColumnAsRow("", new Column(""));
+        else
+            _hasRows = true;
+
+        for (int i = 0; i < row.length; i++) {
+            Column column = row[i];
+            ColumnMetaData colMetaData = colMeta[i];
+            addColumnAsRow(colMetaData.getLabel(), column);
+        }
+
     }
 
     protected void addRowToCache(final Column[] row) {

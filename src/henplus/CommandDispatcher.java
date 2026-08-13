@@ -294,7 +294,7 @@ public class CommandDispatcher implements ReadlineCompleter {
          * ok, do we have a variable expansion ?
          */
         int pos = text.length() - 1;
-        while (pos > 0 && text.charAt(pos) != '$' && Character.isJavaIdentifierPart(text.charAt(pos))) {
+        while (pos > 0 && text.charAt(pos) != '$' && (Character.isJavaIdentifierPart(text.charAt(pos)) || text.charAt(pos) == '.')) {
             --pos;
         }
         // either $... or ${...

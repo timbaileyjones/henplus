@@ -10,29 +10,24 @@ import henplus.HenPlus;
 import henplus.Interruptable;
 import henplus.SQLSession;
 import henplus.SigIntHandler;
+import henplus.view.Column;
 import henplus.view.util.NameCompleter;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
+import java.util.*;
 
 /**
  * FIXME: use SQLMetaData stuff instead.
  */
 public class ListUserObjectsCommand extends AbstractCommand implements Interruptable {
 
-    private static final String[] LIST_TABLES_VIEWS = { "TABLE", "VIEW" };
-    private static final String[] LIST_TABLES = { "TABLE" };
-    private static final String[] LIST_VIEWS = { "VIEW" };
-    private static final int[] TABLE_DISP_COLS = { 2, 3, 4, 5 };
-    private static final int[] PROC_DISP_COLS = { 2, 3, 8 };
+    private static final String[] LIST_TABLES_VIEWS = {"TABLE", "VIEW"};
+    private static final String[] LIST_TABLES = {"TABLE"};
+    private static final String[] LIST_VIEWS = {"VIEW"};
+    private static final int[] TABLE_DISP_COLS = {2, 3, 4, 5};
+    private static final int[] PROC_DISP_COLS = {2, 3, 8};
 
     /**
      * all tables in one session.
@@ -55,7 +50,7 @@ public class ListUserObjectsCommand extends AbstractCommand implements Interrupt
      */
     @Override
     public String[] getCommandList() {
-        return new String[] { "tables", "views", "procedures", "rehash" };
+        return new String[]{"tables", "views", "procedures", "rehash"};
     }
 
     /**
@@ -93,8 +88,30 @@ public class ListUserObjectsCommand extends AbstractCommand implements Interrupt
                     columnDef = TABLE_DISP_COLS;
                 }
 
-                renderer = new ResultSetRenderer(rset, "|", true, true, 10000, HenPlus.out(), columnDef);
+                renderer = new ResultSetRenderer(rset, "|", true, true, false, 10000, HenPlus.out(), columnDef);
                 renderer.getDisplayMetaData()[2].setAutoWrap(78);
+
+                if (param != null && !param.trim().isEmpty()) {
+                    MultiGlobFilter multiFilter = new MultiGlobFilter();
+                    // foo.bar  = len 2
+                    // .bar = len 2
+                    // foo. = len 2
+                    String[] parts = param.trim().split("\\.", 2);
+                    if (parts.length == 2) {
+                        // we have a <schema>.<table> glob, either part could be empty
+                        if (!parts[0].isEmpty()) {
+                            multiFilter.addFilter(new GlobFilter(0, parts[0]));
+                        }
+                        if (!parts[1].isEmpty()) {
+                            multiFilter.addFilter(new GlobFilter(1, parts[1]));
+                        }
+                    } else {
+                        // only have a <table> glob
+                        multiFilter.addFilter(new GlobFilter(1, parts[0]));
+                    }
+
+                    renderer.setFilter(multiFilter);
+                }
 
                 final int tables = renderer.execute();
                 if (tables > 0) {
@@ -296,6 +313,130 @@ public class ListUserObjectsCommand extends AbstractCommand implements Interrupt
     @Override
     public void interrupt() {
         _interrupted = true;
+    }
+
+    public static class GlobFilter implements ResultSetRenderer.ResultSetFilter {
+
+        private final String glob;
+        private final int col;
+        private final String regex;
+
+        public GlobFilter(int col, String glob) {
+            this.col = col;
+            this.glob = glob;
+            this.regex = convertGlobToRegEx(this.glob);
+        }
+
+        @Override
+        public boolean accept(String[] row) {
+            return row[col].matches(regex);
+        }
+
+        private String convertGlobToRegEx(String line) {
+            line = line.trim();
+            int strLen = line.length();
+            StringBuilder sb = new StringBuilder(strLen);
+            // Remove beginning and ending * globs because they're useless
+//            if (line.startsWith("*")) {
+//                line = line.substring(1);
+//                strLen--;
+//            }
+//            if (line.endsWith("*")) {
+//                line = line.substring(0, strLen - 1);
+//                strLen--;
+//            }
+            boolean escaping = false;
+            int inCurlies = 0;
+            for (char currentChar : line.toCharArray()) {
+                switch (currentChar) {
+                    case '*':
+                        if (escaping)
+                            sb.append("\\*");
+                        else
+                            sb.append(".*");
+                        escaping = false;
+                        break;
+                    case '?':
+                        if (escaping)
+                            sb.append("\\?");
+                        else
+                            sb.append('.');
+                        escaping = false;
+                        break;
+                    case '.':
+                    case '(':
+                    case ')':
+                    case '+':
+                    case '|':
+                    case '^':
+                    case '$':
+                    case '@':
+                    case '%':
+                        sb.append('\\');
+                        sb.append(currentChar);
+                        escaping = false;
+                        break;
+                    case '\\':
+                        if (escaping) {
+                            sb.append("\\\\");
+                            escaping = false;
+                        } else
+                            escaping = true;
+                        break;
+                    case '{':
+                        if (escaping) {
+                            sb.append("\\{");
+                        } else {
+                            sb.append('(');
+                            inCurlies++;
+                        }
+                        escaping = false;
+                        break;
+                    case '}':
+                        if (inCurlies > 0 && !escaping) {
+                            sb.append(')');
+                            inCurlies--;
+                        } else if (escaping)
+                            sb.append("\\}");
+                        else
+                            sb.append("}");
+                        escaping = false;
+                        break;
+                    case ',':
+                        if (inCurlies > 0 && !escaping) {
+                            sb.append('|');
+                        } else if (escaping)
+                            sb.append("\\,");
+                        else
+                            sb.append(",");
+                        break;
+                    default:
+                        escaping = false;
+                        sb.append(currentChar);
+                }
+            }
+            return sb.toString();
+        }
+    }
+
+    public static class MultiGlobFilter implements ResultSetRenderer.ResultSetFilter {
+
+        private List<GlobFilter> filters = new ArrayList<GlobFilter>();
+
+        public void addFilter(GlobFilter filter) {
+            filters.add(filter);
+        }
+
+        @Override
+        public boolean accept(String[] row) {
+            // if any of the filters return false, return false
+            for (GlobFilter filter : filters) {
+                if (!filter.accept(row)) {
+                    return false;
+                }
+            }
+            return true;
+        }
     }
 }
 

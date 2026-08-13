@@ -12,6 +12,7 @@ import henplus.io.ConfigurationContainer;
 import henplus.logging.Logger;
 import henplus.view.Column;
 import henplus.view.ColumnMetaData;
+import henplus.view.ITableRenderer;
 import henplus.view.TableRenderer;
 import henplus.view.util.SortedMatchIterator;
 
@@ -154,7 +155,7 @@ public final class DriverCommand extends AbstractCommand {
                 DRV_META[1].resetWidth();
                 DRV_META[2].resetWidth();
                 DRV_META[3].resetWidth();
-                final TableRenderer table = new TableRenderer(DRV_META, HenPlus.out());
+                final ITableRenderer table = new TableRenderer(DRV_META, HenPlus.out());
                 for (Entry<String,DriverDescription> entry : _drivers.entrySet()) {
                     final Column[] row = new Column[4];
                     final DriverDescription desc = entry.getValue();

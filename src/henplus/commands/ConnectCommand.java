@@ -13,6 +13,7 @@ import henplus.SessionManager;
 import henplus.io.ConfigurationContainer;
 import henplus.view.Column;
 import henplus.view.ColumnMetaData;
+import henplus.view.ITableRenderer;
 import henplus.view.TableRenderer;
 import henplus.view.util.SortedMatchIterator;
 
@@ -424,7 +425,7 @@ public class ConnectCommand extends AbstractCommand {
         for (int i = 0; i < SESS_META.length; ++i) {
             SESS_META[i].resetWidth();
         }
-        final TableRenderer table = new TableRenderer(SESS_META, HenPlus.out());
+        final ITableRenderer table = new TableRenderer(SESS_META, HenPlus.out());
         for (String sessName : _sessionManager.getSessionNames()) {
             final SQLSession session = _sessionManager.getSessionByName(sessName);
             final String prepend = sessName.equals(_currentSessionName) ? " * " : "   ";
