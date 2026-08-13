@@ -86,6 +86,49 @@
       <scope>runtime</scope>
     </dependency>
 
+    <!-- "Oddball" drivers, in the same driver-portability spirit as the rest
+         of this roster - Vertica in particular because Tim's own 2012
+         setFetchSize() fix (the origin of this whole modernization effort)
+         was made for a Vertica driver almost nobody else was using at the
+         time. H2 and DuckDB are pure-Java/embedded (no external server, no
+         credentials needed), so they're the only two of these actually
+         self-testable without standing up real infrastructure. -->
+    <dependency>
+      <groupId>com.vertica.jdbc</groupId>
+      <artifactId>vertica-jdbc</artifactId>
+      <version>25.3.0-0</version>
+      <scope>runtime</scope>
+    </dependency>
+    <!-- Held back at 2.2.224: 2.3.232 and later require Java 11 (class file
+         major version 55 vs. our target's 52) - verified by extracting and
+         inspecting org/h2/Driver.class directly, since compilation alone
+         doesn't catch this for a runtime-only dependency we never reference
+         from our own source. -->
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <version>2.2.224</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.duckdb</groupId>
+      <artifactId>duckdb_jdbc</artifactId>
+      <version>1.5.5.1</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.clickhouse</groupId>
+      <artifactId>clickhouse-jdbc</artifactId>
+      <version>0.9.8</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.firebirdsql.jdbc</groupId>
+      <artifactId>jaybird</artifactId>
+      <version>5.0.12.java8</version>
+      <scope>runtime</scope>
+    </dependency>
+
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>

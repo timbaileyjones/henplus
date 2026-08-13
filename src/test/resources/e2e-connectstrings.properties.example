@@ -38,9 +38,14 @@
 # databases you want covered, add one target per database, e.g.:
 #   postgres.url=jdbc:postgresql://localhost:5432/postgres
 #   myapp.url=jdbc:postgresql://localhost:5432/myapp
+#
 #postgres.url=jdbc:postgresql://localhost:5432/postgres
 #postgres.username=postgres
 #postgres.password=
+#psql_destructive.url=jdbc:postgresql://....
+#psql_destructive.username=postgres
+#psql_destructive.password=REDACTED
+
 
 # MySQL - https://dev.mysql.com/doc/connector-j/en/connector-j-reference-jdbc-url-format.html
 #mysql.url=jdbc:mysql://localhost:3306/test
@@ -70,3 +75,30 @@
 
 # SQLite - https://github.com/xerial/sqlite-jdbc#usage - file-based, no server, no credentials needed
 #sqlite.url=jdbc:sqlite:/tmp/henplus-e2e-test.db
+
+# --- "oddball" drivers, same portability spirit as the rest of this roster ---
+
+# Vertica - https://docs.vertica.com/latest/en/client-drivers/jdbc/
+#vertica.url=jdbc:vertica://localhost:5433/vmart
+#vertica.username=dbadmin
+#vertica.password=
+
+# H2 - embedded, zero external infra, self-testable with no server at all -
+# https://www.h2database.com/html/features.html#database_url
+#h2.url=jdbc:h2:mem:testdb
+#h2.username=sa
+#h2.password=
+
+# DuckDB - embedded analytical (OLAP) engine, also zero external infra -
+# https://duckdb.org/docs/api/java
+#duckdb.url=jdbc:duckdb:/tmp/henplus-e2e-test.duckdb
+
+# ClickHouse - https://clickhouse.com/docs/en/integrations/java#jdbc-driver
+#clickhouse.url=jdbc:clickhouse://localhost:8123/default
+#clickhouse.username=default
+#clickhouse.password=
+
+# Firebird - https://firebirdsql.org/file/documentation/drivers_documentation/java/faq.html
+#firebird.url=jdbc:firebirdsql://localhost:3050/path/to/database.fdb
+#firebird.username=sysdba
+#firebird.password=
