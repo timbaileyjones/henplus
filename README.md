@@ -40,7 +40,7 @@ This is where *HenPlus* steps in. It supports:
 * Supports several built-in commands (`start`, `@`, `@@`, `spool`) and syntax from the Oracle SQL-plus utility (like the 
   single '/' on a line to close a statement). Most Oracle SQL-plus scripts will run directly, so its simple to switch to HenPlus. 
   Except if you can't stand, that your life will become much simpler, then ;-) If you have problems running your old scripts, 
-  please let <a href="mailto:henplus@googlegroups.com">us</a> know.
+  please let <a href="mailto:tim@bailey-jones.com">us</a> know.
  
 * Allows a per-project storage of the commandline history, variables, plugins and connections.
 
@@ -122,13 +122,13 @@ redistribution, so nothing under `drivers/` should ever end up committed to this
 For a database not in that list, drop the driver jar into `~/.henplus/lib/` (or any `.henplus/lib`
 directory found by walking up from your current directory) and `bin/henplus` will pick it up the same way.
 
-The Debian (`debian/rules`) and RPM (`henplus.spec.in`) packaging scripts build with `mvn package` and
+The Debian (`debian/rules`) and RPM (`henplus.spec`) packaging scripts build with `mvn package` and
 then install `bin/henplus`, `build/henplus.jar` and `lib/*.jar` into `/usr/bin` and `/usr/share/henplus`
 directly, the same layout the old `ant install` target produced - there's no more `build.xml`/Ant
 anywhere in this repository.
 
 If you've created packages for other operating systems or Windows, please 
-<a href="mailto:henplus@googlgroups.com">let us know</a>.
+<a href="mailto:tim@bailey-jones.com">let us know</a>.
 
 ### Testing
 
@@ -307,7 +307,7 @@ When the driver is loaded, you can connect to the database using the JDBC-URL:
 This will then ask for the username and the password and you are connected. Since it is not possible to set the terminal to 
 non-echo mode while typing the password, a thread constantly redraws the prompt (This is after a hack 
 <a href="http://java.sun.com/features/2002/09/pword_mask.html">found here</a>; thanks so Alec Noronha for the link.)
-If the the redrawing causes trouble with your installation, please let <a href="mailto:henplus@googlegroups.com">us</a> know).
+If the the redrawing causes trouble with your installation, please let <a href="mailto:tim@bailey-jones.com">us</a> know).
 
 Note, that many JDBC-Drivers allow for a URL-syntax, that already includes the name and the password; in that case, you can connect
 directly without typing the user/password; for example in Oracle:

@@ -1,7 +1,11 @@
 This package was debianized by Henner Zeller <H.Zeller@acm.org> on
 Sat, 25 Jan 2003 18:11:14 +0100.
 
-It was downloaded from <http://henplus.sourceforge.net/>
+It was originally downloaded from <http://henplus.sourceforge.net/>. That project
+page has been dead for years, and the code has since moved on and been
+substantially upgraded (build system, dependencies, test suite) well beyond
+what was ever hosted there, so it's now tracked at
+<https://github.com/timbaileyjones/henplus> instead.
 
 Upstream Author: Henner Zeller <H.Zeller@acm.org>
 

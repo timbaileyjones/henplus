@@ -1,6 +1,11 @@
 # $Id: henplus.spec.in,v 1.10 2008-11-16 04:24:59 magrokosmos Exp $
 #
-%define version @HENPLUS_VERSION@
+# No longer templated from a .in file - build.xml's "henplus.spec" target
+# used to fill in @HENPLUS_VERSION@, but that target is gone along with the
+# rest of the Ant build. Keep this version in sync with pom.xml's <version>
+# by hand (RPM version strings can't contain "-", so drop any "-SNAPSHOT"
+# qualifier).
+%define version 0.9.9
 
 Summary: JDBC SQL utility with readline commandline editing
 License: GNU General Public License (GPL)
@@ -9,8 +14,8 @@ Name: henplus
 Prefix: /usr
 Packager: Henner Zeller <H.Zeller@acm.org>
 Release: 2
-Source: http://prdownloads.sourceforge.net/henplus/henplus-%{version}.tar.gz
-URL: http://sourceforge.net/projects/henplus/
+Source: https://github.com/timbaileyjones/henplus/archive/refs/heads/master.tar.gz
+URL: https://github.com/timbaileyjones/henplus
 Version: %{version}
 Buildroot: /tmp/henplus
 BuildRequires: maven >= 3.6
