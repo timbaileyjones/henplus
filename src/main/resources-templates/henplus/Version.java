@@ -16,9 +16,9 @@ public class Version {
         // noop
     }
     
-    public static String getVersion() { return "@HENPLUS_VERSION@"; }
-    public static String getCompileTime() { return "@COMPILE_TIME@"; }
-    public static String getVersionTitle() { return "@HENPLUS_VERSION_TITLE@"; }
+    public static String getVersion() { return "@project.version@"; }
+    public static String getCompileTime() { return "@maven.build.timestamp@"; }
+    public static String getVersionTitle() { return "@henplus.title@"; }
 }
 
 /*
