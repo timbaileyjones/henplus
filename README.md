@@ -92,41 +92,44 @@ installation description.
 
 ### Compilation
 
-Follow these instructions if you want to compile HenPlus yourself. First you need an additional library. HenPlus uses the 
-features of the GNU-readline library and therefore needs the JNI java wrapper library.
+Follow these instructions if you want to compile HenPlus yourself. It's built with 
+<a href="https://maven.apache.org/">Maven</a> (3.6+) against a JDK 8 or later. Command line editing is
+provided by <a href="https://github.com/jline/jline3">JLine</a>, a pure-Java library, so unlike older
+versions of HenPlus there's no native/JNI library to separately compile or install first.
 
-<a href="http://sourceforge.net/project/showfiles.php?group_id=48669">java-readline 0.7.3</a>
-( <a href="http://toonetown.blogspot.com/2006/07/java-readline-on-mac-os-x-update.html">compilation on Mac OS X</a> )
+Just type
 
-To build HenPlus the <a href="http://jakarta.apache.org/ant">ant build tool</a> (Version >= 1.4) is required. 
+    $ mvn package
 
-Now, just type
+which compiles the sources and produces `build/henplus.jar` (and `build/classes`, used directly by the
+`bin/henplus` script below when running from a checkout rather than an installed package).
 
-    $ ant jar
+You can then run it straight out of the checkout, no install step required:
 
-If you are root, then you can install it with:
+    $ ./bin/henplus jdbc:mysql://localhost/foobar
 
-    # ant install
+#### JDBC drivers
 
-which will install henplus in
+`pom.xml` declares JDBC drivers for the most common databases (PostgreSQL, MySQL, MariaDB, SQL Server,
+Oracle, DB2, SQLite) as `runtime`-scope dependencies. `mvn package` downloads them into a `drivers/`
+directory, which `bin/henplus` automatically adds to its classpath - so for any of those databases, you
+only need to supply the JDBC URL, username and password; no manual `CLASSPATH` wrangling.
 
-`/usr/share/henplus/henplus.jar` The jar-file containing the HenPlus classes. You can add additional jar files in this directory. 
-All of them are added to the classpath in the henplus shellscript (use this for JDBC-drivers).
+`drivers/` is deliberately `.gitignore`d rather than committed like `lib/`: some of these driver jars -
+Oracle's in particular, which ships under the Oracle Free Use Terms and Conditions - restrict
+redistribution, so nothing under `drivers/` should ever end up committed to this repository.
 
-`/usr/bin/henplus` Shellscript to start henplus.
+For a database not in that list, drop the driver jar into `~/.henplus/lib/` (or any `.henplus/lib`
+directory found by walking up from your current directory) and `bin/henplus` will pick it up the same way.
 
-If you want another installation base (default: `/usr`), you provide this with the parameter `prefix`:
-
-    $ ant -Dprefix=/usr/local install
-
-(For package providers: the build.xml provides as well the `DESTDIR` parameter with a similar meaning as in usual Makefiles).
+If you are root, you can still install a system-wide package (`/usr/bin/henplus` and
+`/usr/share/henplus/henplus.jar`) via the original Ant build (`ant install`, or `ant -Dprefix=/usr/local
+install` for a different prefix) - `build.xml` is kept around for now because the Debian (`debian/rules`)
+and RPM (`henplus.spec.in`) packaging scripts still invoke it directly. Migrating those to the Maven
+build is a follow-up, not yet done.
 
 If you've created packages for other operating systems (like Solaris) or Windows, please 
 <a href="mailto:henplus@googlgroups.com">let us know</a>.
-
-We haven't compiled this on Windows, but it shouldn't be a big deal if you manage to compile the java-readline. This is an 
-JNI shared library and thus platform dependant. If you did it, please post your experience, so that we can include it in 
-this documentation.
 
 Running
 -------
