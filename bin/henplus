@@ -24,6 +24,14 @@ if [ ! -d "$HENPLUSDIR" ] ; then
 	for f in "$HENPLUSDIR"/lib/*.jar ; do
 	    CLASSPATH="$CLASSPATH:$f"
 	done
+	# JDBC drivers that "mvn package" downloaded into drivers/ (kept out of
+	# lib/ deliberately - see pom.xml - since some, like Oracle's, restrict
+	# redistribution and lib/ is git-tracked).
+	for f in "$HENPLUSDIR"/drivers/*.jar ; do
+	    if [ -r "$f" ] ; then
+	        CLASSPATH="$CLASSPATH:$f"
+	    fi
+	done
 	CLASSPATH="$HENPLUSDIR/build/classes:$CLASSPATH"
 fi
 
