@@ -26,6 +26,12 @@ import org.junit.jupiter.api.TestFactory;
  * doesn't blow up - not any particular content, since what exists is whatever's actually in that database. Names of
  * everything found are printed to stdout so a run is actually informative to read, not just pass/fail; run without "-q"
  * (or check build/failsafe-reports/) to see them. Only runs via "mvn verify", same as {@link E2EConnectionsIT}.
+ *
+ * The tables/views lists only include DatabaseMetaData.TABLE_TYPE "TABLE"/"VIEW", matching what henplus's own
+ * ListUserObjectsCommand filters on - so e.g. against Postgres, catalog internals typed "SYSTEM TABLE"/"SYSTEM VIEW"/
+ * "INDEX"/"SEQUENCE" etc. are intentionally excluded, same as running the real tables/views commands would show. A
+ * "total catalog objects seen" count (no type filter) is also printed, so an unexpectedly short tables/views list reads
+ * as "correctly filtered" rather than "did discovery even run."
  */
 class E2EDiscoveryIT {
 
@@ -41,6 +47,13 @@ class E2EDiscoveryIT {
 
                 final List<String> schemas = listSchemas(meta, prefix);
                 System.out.println(prefix + "schemas: " + describe(schemas));
+
+                final int rawObjectCount = countAllObjects(meta);
+                System.out.println(prefix + rawObjectCount
+                        + " total catalog object(s) seen across all schemas/types (proves iteration isn't the issue if "
+                        + "tables/views below look empty) - henplus's own tables/views commands only show TABLE_TYPE "
+                        + "'TABLE'/'VIEW' though, so e.g. Postgres's SYSTEM TABLE/SYSTEM VIEW/INDEX/SEQUENCE entries are "
+                        + "intentionally excluded from what's listed next, same as running those commands for real would show");
 
                 final List<String[]> tables = listTablesOrViews(meta, TABLE_TYPES);
                 System.out.println(prefix + "tables: " + describe(qualifiedNames(tables)));
@@ -70,6 +83,16 @@ class E2EDiscoveryIT {
             System.out.println(logPrefix + "getSchemas() not supported by this driver, skipping");
         }
         return names;
+    }
+
+    private static int countAllObjects(final DatabaseMetaData meta) throws SQLException {
+        int count = 0;
+        try (ResultSet rs = meta.getTables(null, null, null, null)) {
+            while (rs.next()) {
+                count++;
+            }
+        }
+        return count;
     }
 
     private static List<String[]> listTablesOrViews(final DatabaseMetaData meta, final String[] types) throws SQLException {
