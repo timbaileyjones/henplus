@@ -1,8 +1,8 @@
-# This is a template for henplus.e2e.E2EConnectionsIT, the end-to-end test
-# suite that connects to real databases to confirm the JDBC drivers declared
-# in pom.xml actually work. It's a template, not the real thing: it lives in
-# this repository under version control, so it must never contain real
-# credentials.
+# This is a template for the henplus.e2e end-to-end test suite
+# (E2EConnectionsIT, E2EDiscoveryIT) that connects to real databases to
+# confirm the JDBC drivers declared in pom.xml actually work. It's a
+# template, not the real thing: it lives in this repository under version
+# control, so it must never contain real credentials.
 #
 # To use it:
 #
@@ -31,6 +31,13 @@
 # anything - it's just a label, shown as the test name in the report.
 
 # PostgreSQL - https://jdbc.postgresql.org/documentation/use/#connection-parameters
+# NOTE: a Postgres connection is scoped to exactly one *database* (the last
+# path segment of the URL) - you can't query across databases on the same
+# server from a single connection, unlike a schema, which the same
+# connection can see plenty of. If your Postgres server hosts several
+# databases you want covered, add one target per database, e.g.:
+#   postgres.url=jdbc:postgresql://localhost:5432/postgres
+#   myapp.url=jdbc:postgresql://localhost:5432/myapp
 #postgres.url=jdbc:postgresql://localhost:5432/postgres
 #postgres.username=postgres
 #postgres.password=
