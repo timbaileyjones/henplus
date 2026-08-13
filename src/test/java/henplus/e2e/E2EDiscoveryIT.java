@@ -9,7 +9,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
@@ -21,8 +23,9 @@ import org.junit.jupiter.api.TestFactory;
  * {@link E2EConfig#DEFAULT_PATH}, one dynamic test per target.
  *
  * This is read-only: it lists whatever schemas/tables/views/indexes already exist, asserting only that discovery itself
- * doesn't blow up - not any particular content, since what exists is whatever's actually in that database. Only runs via
- * "mvn verify", same as {@link E2EConnectionsIT}.
+ * doesn't blow up - not any particular content, since what exists is whatever's actually in that database. Names of
+ * everything found are printed to stdout so a run is actually informative to read, not just pass/fail; run without "-q"
+ * (or check build/failsafe-reports/) to see them. Only runs via "mvn verify", same as {@link E2EConnectionsIT}.
  */
 class E2EDiscoveryIT {
 
@@ -34,19 +37,21 @@ class E2EDiscoveryIT {
         return E2EConfig.dynamicTestsPerTarget(target -> () -> {
             try (Connection connection = DriverManager.getConnection(target.url, target.username, target.password)) {
                 final DatabaseMetaData meta = connection.getMetaData();
+                final String prefix = "[" + target.name + "] ";
 
-                final int schemaCount = countSchemas(meta, target.name);
+                final List<String> schemas = listSchemas(meta, prefix);
+                System.out.println(prefix + "schemas: " + describe(schemas));
+
                 final List<String[]> tables = listTablesOrViews(meta, TABLE_TYPES);
+                System.out.println(prefix + "tables: " + describe(qualifiedNames(tables)));
+
                 final List<String[]> views = listTablesOrViews(meta, VIEW_TYPES);
+                System.out.println(prefix + "views: " + describe(qualifiedNames(views)));
 
-                int indexedTables = 0;
                 for (final String[] table : tables) {
-                    listIndexes(meta, table);
-                    indexedTables++;
+                    final List<String> indexNames = listIndexNames(meta, table);
+                    System.out.println(prefix + "indexes on " + qualifiedName(table) + ": " + describe(indexNames));
                 }
-
-                System.out.printf("[%s] discovered: %d schema(s), %d table(s), %d view(s), indexes checked on all %d table(s)%n",
-                        target.name, schemaCount, tables.size(), views.size(), indexedTables);
             }
         });
     }
@@ -55,17 +60,16 @@ class E2EDiscoveryIT {
      * getSchemas() support genuinely varies by vendor/driver (e.g. SQLite has no real schema concept) - unsupported is
      * tolerated, but any other failure is a real problem worth failing the test over.
      */
-    private static int countSchemas(final DatabaseMetaData meta, final String targetName) throws SQLException {
+    private static List<String> listSchemas(final DatabaseMetaData meta, final String logPrefix) throws SQLException {
+        final List<String> names = new ArrayList<>();
         try (ResultSet rs = meta.getSchemas()) {
-            int count = 0;
             while (rs.next()) {
-                count++;
+                names.add(rs.getString("TABLE_SCHEM"));
             }
-            return count;
         } catch (final SQLFeatureNotSupportedException e) {
-            System.out.printf("[%s] getSchemas() not supported by this driver, skipping%n", targetName);
-            return 0;
+            System.out.println(logPrefix + "getSchemas() not supported by this driver, skipping");
         }
+        return names;
     }
 
     private static List<String[]> listTablesOrViews(final DatabaseMetaData meta, final String[] types) throws SQLException {
@@ -78,16 +82,39 @@ class E2EDiscoveryIT {
         return found;
     }
 
-    private static void listIndexes(final DatabaseMetaData meta, final String[] table) {
+    private static List<String> listIndexNames(final DatabaseMetaData meta, final String[] table) {
         final String catalog = table[0];
         final String schema = table[1];
         final String tableName = table[2];
+        final Set<String> names = new LinkedHashSet<>();
         assertDoesNotThrow(() -> {
             try (ResultSet rs = meta.getIndexInfo(catalog, schema, tableName, false, true)) {
                 while (rs.next()) {
-                    // just draining the cursor - discovery working without error is the point, not any particular index.
+                    final String indexName = rs.getString("INDEX_NAME");
+                    if (indexName != null) {
+                        names.add(indexName);
+                    }
                 }
             }
         }, "listing indexes for '" + tableName + "' should not throw");
+        return new ArrayList<>(names);
+    }
+
+    private static List<String> qualifiedNames(final List<String[]> tables) {
+        final List<String> names = new ArrayList<>();
+        for (final String[] table : tables) {
+            names.add(qualifiedName(table));
+        }
+        return names;
+    }
+
+    private static String qualifiedName(final String[] table) {
+        final String schema = table[1];
+        final String name = table[2];
+        return schema == null ? name : schema + "." + name;
+    }
+
+    private static String describe(final List<String> names) {
+        return names.isEmpty() ? "(none)" : String.join(", ", names);
     }
 }
