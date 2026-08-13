@@ -2,6 +2,7 @@ src/main/java/henplus/Version.java
 .eclipse-bin
 build
 target
+drivers
 .settings
 .ant-targets-build.xml
 classes/
