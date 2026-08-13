@@ -9,16 +9,14 @@ import henplus.commands.properties.PropertyCommand;
 import henplus.commands.properties.SessionPropertyCommand;
 import henplus.io.ConfigurationContainer;
 import henplus.logging.Logger;
-import henplus.util.StringUtil;
 
 import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -28,8 +26,12 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.PosixParser;
-import org.gnu.readline.Readline;
-import org.gnu.readline.ReadlineLibrary;
+import org.jline.reader.EndOfFileException;
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
+import org.jline.reader.UserInterruptException;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
 
 public final class HenPlus implements Interruptable {
 
@@ -44,6 +46,7 @@ public final class HenPlus implements Interruptable {
     private static HenPlus instance = null; // singleton.
 
     private boolean _fromTerminal;
+    LineReader _lineReader;
     private final SQLStatementSeparator _commandSeparator;
     private final StringBuilder _historyLine;
 
@@ -85,15 +88,26 @@ public final class HenPlus implements Interruptable {
      * @param argv
      * @throws UnsupportedEncodingException
      */
-    private void init(final String[] argv) throws UnsupportedEncodingException {
-        String noReadlineMsg = null;
-        try {
-            Readline.load(ReadlineLibrary.GnuReadline);
-        } catch (final UnsatisfiedLinkError ignoreMe) {
-            noReadlineMsg = String.format("no readline found (%s). Using simple stdin.", ignoreMe.getMessage());
-        }
+    private void init(final String[] argv) throws IOException {
 
-        _fromTerminal = Readline.hasTerminal();
+        HenplusLineParser parser = new HenplusLineParser();
+        Terminal terminal = TerminalBuilder.builder().build();
+
+        LineReaderBuilder lineReaderBuilder = LineReaderBuilder.builder()
+            .terminal(terminal)
+            .parser(parser)
+            .variable(LineReader.SECONDARY_PROMPT_PATTERN, "%M%P > ")
+            .variable(LineReader.INDENTATION, 2)
+            .variable(LineReader.LIST_MAX, 100)
+            .option(LineReader.Option.INSERT_BRACKET, true)
+            .option(LineReader.Option.EMPTY_WORD_OPTIONS, false)
+            .option(LineReader.Option.USE_FORWARD_SLASH, true) // use forward slash in directory separator
+            .option(LineReader.Option.DISABLE_EVENT_EXPANSION, true);
+
+        //_fromTerminal = Readline.hasTerminal();
+        // TODO: figure out better way of identifying terminal vs pipe
+        _fromTerminal = terminal.getSize().getRows() != 0 && terminal.getSize().getColumns() != 0;
+
         _quiet |= !_fromTerminal; // not from terminal: always quiet.
 
         if (_fromTerminal) {
@@ -105,23 +119,38 @@ public final class HenPlus implements Interruptable {
         initializeCommands(argv);
         readCommandLineOptions(argv);
 
-        if (StringUtil.isEmpty(noReadlineMsg)) {
-            Logger.info("using GNU readline (Brian Fox, Chet Ramey), Java wrapper by Bernhard Bablok");
-        } else {
-            Logger.info(noReadlineMsg);
-        }
-
-        _historyConfig = createConfigurationContainer(HISTORY_NAME);
-        Readline.initReadline("HenPlus");
-        _historyConfig.read(new ConfigurationContainer.ReadAction() {
+        /* FIXME: do this platform independently */
+        Runtime.getRuntime().addShutdownHook(new Thread() {
 
             @Override
-            public void readConfiguration(final InputStream in) throws Exception {
-                HistoryWriter.readReadlineHistory(in);
+            public void run() {
+                shutdown();
             }
         });
+        /*
+         * if your compiler/system/whatever does not support the sun.misc.
+         * classes, then just disable this call and the SigIntHandler class.
+         */
+        terminal.handle(Terminal.Signal.INT, SigIntHandler.getHandler());
 
-        Readline.setWordBreakCharacters(" ,/()<>=\t\n"); // TODO..
+        /*
+         * TESTING for ^Z support in the shell. sun.misc.SignalHandler stoptest
+         * = new sun.misc.SignalHandler () { public void handle(sun.misc.Signal
+         * sig) { System.out.println("caught: " + sig); } }; try {
+         * sun.misc.Signal.handle(new sun.misc.Signal("TSTP"), stoptest); }
+         * catch (Exception e) { // ignore. }
+         *
+         * end testing
+         */
+
+        Path historyPath = new File(getConfigDir(), "history-jline").toPath();
+        parser.dispatcher(_dispatcher);
+        _lineReader = lineReaderBuilder
+            .completer(_dispatcher)
+            .variable(LineReader.HISTORY_FILE, historyPath)
+            .build();
+
+        //Readline.setWordBreakCharacters(" ,/()<>=\t\n"); // TODO..
         setDefaultPrompt();
     }
 
@@ -151,9 +180,10 @@ public final class HenPlus implements Interruptable {
         _dispatcher.register(new DriverCommand(this));
         final AliasCommand aliasCommand = new AliasCommand(this);
         _dispatcher.register(aliasCommand);
-        if (_fromTerminal) {
-            _dispatcher.register(new KeyBindCommand(this));
-        }
+        // TODO: enable JLine keybinding commands
+        // if (_fromTerminal) {
+        //     _dispatcher.register(new KeyBindCommand(this));
+        // }
 
         final LoadCommand loadCommand = new LoadCommand();
         _dispatcher.register(loadCommand);
@@ -183,41 +213,9 @@ public final class HenPlus implements Interruptable {
 
         _dispatcher.register(new SystemInfoCommand());
 
-        _dispatcher.register(new ReadlineCommands());
-
         pluginCommand.load();
         aliasCommand.load();
         propertyCommand.load();
-
-        Readline.setCompleter(_dispatcher);
-
-        /* FIXME: do this platform independently */
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-
-            @Override
-            public void run() {
-                shutdown();
-            }
-        });
-        /*
-         * if your compiler/system/whatever does not support the sun.misc.
-         * classes, then just disable this call and the SigIntHandler class.
-         */
-        try {
-            SigIntHandler.install();
-        } catch (final Throwable t) {
-            // ignore.
-        }
-
-        /*
-         * TESTING for ^Z support in the shell. sun.misc.SignalHandler stoptest
-         * = new sun.misc.SignalHandler () { public void handle(sun.misc.Signal
-         * sig) { System.out.println("caught: " + sig); } }; try {
-         * sun.misc.Signal.handle(new sun.misc.Signal("TSTP"), stoptest); }
-         * catch (Exception e) { // ignore. }
-         * 
-         * end testing
-         */
     }
 
     /**
@@ -321,7 +319,7 @@ public final class HenPlus implements Interruptable {
     private void storeLineInHistory() {
         final String line = _historyLine.toString();
         if (!"".equals(line) && !line.equals(_previousHistoryLine)) {
-            Readline.addToHistory(line);
+            _lineReader.getHistory().add(line);
             _previousHistoryLine = line;
         }
         _historyLine.setLength(0);
@@ -378,10 +376,6 @@ public final class HenPlus implements Interruptable {
         return result;
     }
 
-    public String getPartialLine() {
-        return _historyLine.toString() + Readline.getLineBuffer();
-    }
-
     public void run() {
         String cmdLine = null;
         String displayPrompt = _prompt;
@@ -397,8 +391,8 @@ public final class HenPlus implements Interruptable {
             SigIntHandler.getInstance().pushInterruptable(this);
 
             try {
-                cmdLine = _fromTerminal ? Readline.readline(displayPrompt, false) : readlineFromFile();
-            } catch (final EOFException e) {
+                cmdLine = _fromTerminal ? _lineReader.readLine(displayPrompt) : readlineFromFile();
+            } catch (final EndOfFileException e) {
                 // EOF on CTRL-D
                 if (_sessionManager.getCurrentSession() != null) {
                     _dispatcher.execute(_sessionManager.getCurrentSession(), "disconnect");
@@ -407,13 +401,16 @@ public final class HenPlus implements Interruptable {
                 } else {
                     break; // last session closed -> exit.
                 }
+            } catch (final UserInterruptException e) {
+                // CTRL-C
+                _interrupted = true;
             } catch (final Exception e) {
                 if (_verbose) {
                     e.printStackTrace();
                 }
+            } finally {
+                SigIntHandler.getInstance().reset();
             }
-
-            SigIntHandler.getInstance().reset();
 
             // anyone pressed CTRL-C
             if (_interrupted) {
@@ -465,16 +462,8 @@ public final class HenPlus implements Interruptable {
             if (_dispatcher != null) {
                 _dispatcher.shutdown();
             }
-            if (_historyConfig != null) {
-                _historyConfig.write(new ConfigurationContainer.WriteAction() {
-
-                    @Override
-                    public void writeConfiguration(final OutputStream out) throws Exception {
-                        HistoryWriter.writeReadlineHistory(out);
-                    }
-                });
-            }
-            Readline.cleanup();
+            // TODO: shutdown/cleanup JLine
+            // Readline.cleanup();
         } finally {
             _alreadyShutDown = true;
         }

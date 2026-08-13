@@ -9,6 +9,7 @@ import henplus.property.EnumeratedPropertyHolder;
 import henplus.sqlmodel.Table;
 
 import java.io.BufferedReader;
+import java.io.Console;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Connection;
@@ -230,45 +231,15 @@ public class SQLSession implements Interruptable {
      * This is after a hack found in http://java.sun.com/features/2002/09/pword_mask.html
      */
     private String promptPassword(final String prompt) throws IOException {
-        String password = "";
-        final PasswordEraserThread maskingthread = new PasswordEraserThread(prompt);
-        try {
-            final byte[] lineBuffer = new byte[64];
-            maskingthread.start();
-            while (true) {
-                if (_interrupted) {
-                    break;
-                }
-
-                maskingthread.goOn();
-                final int byteCount = System.in.read(lineBuffer);
-                /*
-                 * hold on as soon as the system call returnes. Usually, this is
-                 * because we read the newline.
-                 */
-                maskingthread.holdOn();
-
-                for (int i = 0; i < byteCount; ++i) {
-                    char c = (char) lineBuffer[i];
-                    if (c == '\r') {
-                        c = (char) lineBuffer[++i];
-                        if (c == '\n') {
-                            return password;
-                        } else {
-                            continue;
-                        }
-                    } else if (c == '\n') {
-                        return password;
-                    } else {
-                        password += c;
-                    }
-                }
-            }
-        } finally {
-            maskingthread.done();
+        Console console = System.console();
+        if (console == null) {
+            System.out.println("Couldn't get Console instance");
+            System.exit(0);
         }
 
-        return password;
+        char passwordArray[] = console.readPassword(prompt);
+
+        return new String(passwordArray);
     }
 
     // -- Interruptable interface

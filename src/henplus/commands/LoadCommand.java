@@ -17,11 +17,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.Stack;
-import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * The Load command loads scripts; it implemnts the commands 'load', 'start', '@' and '@@'.
@@ -87,15 +90,29 @@ public class LoadCommand extends AbstractCommand implements Interruptable {
      */
     @Override
     public int execute(final SQLSession session, final String cmd, final String param) {
-        final StringTokenizer st = new StringTokenizer(param);
-        final int argc = st.countTokens();
-        if (argc < 1) {
+        final Pattern pattern = Pattern.compile("\"([^\"]*)\"|(\\S+)");
+        Matcher matcher = pattern.matcher(param);
+
+        List<String> paths = new ArrayList<>();
+
+        while (matcher.find()) {
+            if (matcher.group(1) != null) {
+                // Group 1 captures quoted substrings
+                paths.add(matcher.group(1));
+            } else {
+                // Group 2 captures unquoted arguments
+                paths.add(matcher.group(2));
+            }
+        }
+
+        if (paths.isEmpty()) {
             return SYNTAX_ERROR;
         }
+
         final HenPlus henplus = HenPlus.getInstance();
-        while (st.hasMoreElements()) {
+        for (int idx = 0; idx < paths.size(); idx++) {
             int commandCount = 0;
-            final String filename = (String) st.nextElement();
+            final String filename = paths.get(idx);
             final long startTime = System.currentTimeMillis();
             File currentFile = null;
             try {
@@ -125,7 +142,7 @@ public class LoadCommand extends AbstractCommand implements Interruptable {
             } catch (final Exception e) {
                 // e.printStackTrace();
                 HenPlus.msg().println(e.getMessage());
-                if (st.hasMoreElements()) {
+                if (idx < paths.size()) {
                     HenPlus.msg().println("..skipping to next file.");
                     continue;
                 }
