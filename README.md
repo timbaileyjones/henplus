@@ -140,10 +140,19 @@ these always run as part of a normal build.
     $ mvn verify
 
 additionally runs the end-to-end tests (`src/test/java/**/*IT.java`), which connect to real databases to
-confirm the JDBC drivers actually work. Since that needs real credentials, they're read from a properties
-file that lives outside this repository, at `~/.config/henplus/e2e-connectstrings.properties`, and are
-never committed. If this file doesn't exist, `mvn verify` still succeeds; it just prints a warning and
-skips with an invitation to add one.
+confirm the JDBC drivers actually work:
+
+* `E2EConnectionsIT` opens a connection and checks it's valid.
+* `E2EDiscoveryIT` exercises the same `DatabaseMetaData` calls henplus's own discovery commands are built
+  on - `tables`/`views` (`getTables(...)`) and `describe`'s index listing (`getIndexInfo(...)`) - listing
+  whatever schemas/tables/views/indexes already exist. It's read-only: nothing is created, modified or
+  dropped, and it only asserts that discovery itself doesn't error, not any particular content, since
+  what's actually there depends on the database you point it at.
+
+Since this needs real credentials, they're read from a properties file that lives outside this
+repository, at `~/.config/henplus/e2e-connectstrings.properties`, and are never committed. If this file
+doesn't exist, `mvn verify` still succeeds; it just prints a warning and skips with an invitation to add
+one.
 
 To set it up, copy the annotated template and fill in whichever database(s) you want to test against:
 

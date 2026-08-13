@@ -10,6 +10,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.TreeSet;
+import java.util.function.Function;
+
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.function.Executable;
+
+import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 
 /**
  * Loads end-to-end database targets from a properties file that deliberately lives outside this repository, so real
@@ -84,5 +91,29 @@ public final class E2EConfig {
 
     public boolean isEmpty() {
         return targets.isEmpty();
+    }
+
+    /**
+     * Builds one {@link DynamicTest} per configured target, via the given executable factory. If no targets are
+     * configured, this doesn't fail: it prints a warning to stderr and returns a single skipped test inviting you to add
+     * some, rather than an empty list (a {@code @TestFactory} returning zero tests reads as "nothing to check", not "check
+     * skipped" - this makes the skip visible in the test report).
+     */
+    public static List<DynamicTest> dynamicTestsPerTarget(final Function<Target, Executable> testBuilder) throws IOException {
+        final E2EConfig config = load();
+
+        if (config.isEmpty()) {
+            final String message = "No e2e database targets configured. Create " + DEFAULT_PATH
+                    + " (copy src/test/resources/e2e-connectstrings.properties.example and fill in what you want to test"
+                    + " against) to enable end-to-end tests here.";
+            System.err.println("WARNING: " + message);
+            return Collections.singletonList(dynamicTest("no e2e targets configured", () -> Assumptions.assumeTrue(false, message)));
+        }
+
+        final List<DynamicTest> tests = new ArrayList<>();
+        for (final Target target : config.targets()) {
+            tests.add(dynamicTest(target.name, testBuilder.apply(target)));
+        }
+        return tests;
     }
 }
