@@ -127,7 +127,7 @@ then install `bin/henplus`, `build/henplus.jar` and `lib/*.jar` into `/usr/bin` 
 directly, the same layout the old `ant install` target produced - there's no more `build.xml`/Ant
 anywhere in this repository.
 
-If you've created packages for other operating systems (like Solaris) or Windows, please 
+If you've created packages for other operating systems or Windows, please 
 <a href="mailto:henplus@googlgroups.com">let us know</a>.
 
 ### Testing
@@ -142,16 +142,19 @@ these always run as part of a normal build.
 additionally runs the end-to-end tests (`src/test/java/**/*IT.java`), which connect to real databases to
 confirm the JDBC drivers actually work. Since that needs real credentials, they're read from a properties
 file that lives outside this repository, at `~/.config/henplus/e2e-connectstrings.properties`, and are
-never committed. Each database you want covered gets three keys, grouped by a name of your choosing:
+never committed. If this file doesn't exist, `mvn verify` still succeeds; it just prints a warning and
+skips with an invitation to add one.
 
-    postgres.url=jdbc:postgresql://localhost:5432/postgres
-    postgres.username=postgres
-    postgres.password=secret
+To set it up, copy the annotated template and fill in whichever database(s) you want to test against:
 
-    sqlite.url=jdbc:sqlite:/tmp/henplus-e2e-test.db
+    $ mkdir -p ~/.config/henplus
+    $ cp src/test/resources/e2e-connectstrings.properties.example \
+          ~/.config/henplus/e2e-connectstrings.properties
 
-(`username`/`password` are optional - SQLite needs neither.) If this file doesn't exist, `mvn verify`
-still succeeds; it just prints a warning and skips with an invitation to add one.
+Then edit that copy: uncomment the `.url`/`.username`/`.password` lines for each database you want
+covered (a name of your choosing, e.g. `postgres.url=...`) and fill in real values -
+`username`/`password` are optional, e.g. for SQLite. The template has a ready-to-uncomment block for
+every driver in `pom.xml`.
 
 Running
 -------
