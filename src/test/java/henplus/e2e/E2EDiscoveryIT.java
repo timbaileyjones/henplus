@@ -29,14 +29,22 @@ import org.junit.jupiter.api.TestFactory;
  *
  * The tables/views lists only include DatabaseMetaData.TABLE_TYPE "TABLE"/"VIEW", matching what henplus's own
  * ListUserObjectsCommand filters on - so e.g. against Postgres, catalog internals typed "SYSTEM TABLE"/"SYSTEM VIEW"/
- * "INDEX"/"SEQUENCE" etc. are intentionally excluded, same as running the real tables/views commands would show. A
- * "total catalog objects seen" count (no type filter) is also printed, so an unexpectedly short tables/views list reads
- * as "correctly filtered" rather than "did discovery even run."
+ * "INDEX"/"SEQUENCE" etc. are intentionally excluded, same as running the real tables/views commands would show. The
+ * tables line also reports how many catalog objects exist in total (no type filter), so an unexpectedly short
+ * tables/views list reads as "correctly filtered" rather than "did discovery even run."
+ *
+ * Kept deliberately terse against large schemas (e.g. a real Odoo database has 300+ tables): name lists longer than
+ * {@link #MAX_NAMES_SHOWN} are truncated with a "... and N more" suffix, and indexes are reported as one aggregate
+ * count across all tables rather than a line per table - a full per-table breakdown was tried first and produced
+ * hundreds of lines of output on every "mvn verify" run against a real-world database, burying the signal.
  */
 class E2EDiscoveryIT {
 
     private static final String[] TABLE_TYPES = { "TABLE" };
     private static final String[] VIEW_TYPES = { "VIEW" };
+
+    /** Name lists longer than this are truncated in stdout to keep output readable against large schemas. */
+    private static final int MAX_NAMES_SHOWN = 15;
 
     @TestFactory
     List<DynamicTest> discoverExistingObjects() throws java.io.IOException {
@@ -46,25 +54,22 @@ class E2EDiscoveryIT {
                 final String prefix = "[" + target.name + "] ";
 
                 final List<String> schemas = listSchemas(meta, prefix);
-                System.out.println(prefix + "schemas: " + describe(schemas));
+                System.out.println(prefix + "schemas (" + schemas.size() + "): " + describe(schemas));
 
                 final int rawObjectCount = countAllObjects(meta);
-                System.out.println(prefix + rawObjectCount
-                        + " total catalog object(s) seen across all schemas/types (proves iteration isn't the issue if "
-                        + "tables/views below look empty) - henplus's own tables/views commands only show TABLE_TYPE "
-                        + "'TABLE'/'VIEW' though, so e.g. Postgres's SYSTEM TABLE/SYSTEM VIEW/INDEX/SEQUENCE entries are "
-                        + "intentionally excluded from what's listed next, same as running those commands for real would show");
 
                 final List<String[]> tables = listTablesOrViews(meta, TABLE_TYPES);
-                System.out.println(prefix + "tables: " + describe(qualifiedNames(tables)));
+                System.out.println(prefix + "tables (" + tables.size() + " of " + rawObjectCount + " catalog objects"
+                        + " seen - henplus's tables/views commands only show TABLE_TYPE 'TABLE'/'VIEW'): " + describe(qualifiedNames(tables)));
 
                 final List<String[]> views = listTablesOrViews(meta, VIEW_TYPES);
-                System.out.println(prefix + "views: " + describe(qualifiedNames(views)));
+                System.out.println(prefix + "views (" + views.size() + "): " + describe(qualifiedNames(views)));
 
+                int totalIndexes = 0;
                 for (final String[] table : tables) {
-                    final List<String> indexNames = listIndexNames(meta, table);
-                    System.out.println(prefix + "indexes on " + qualifiedName(table) + ": " + describe(indexNames));
+                    totalIndexes += listIndexNames(meta, table).size();
                 }
+                System.out.println(prefix + "indexes: " + totalIndexes + " total across " + tables.size() + " table(s)");
             }
         });
     }
@@ -138,6 +143,13 @@ class E2EDiscoveryIT {
     }
 
     private static String describe(final List<String> names) {
-        return names.isEmpty() ? "(none)" : String.join(", ", names);
+        if (names.isEmpty()) {
+            return "(none)";
+        }
+        if (names.size() <= MAX_NAMES_SHOWN) {
+            return String.join(", ", names);
+        }
+        final int remaining = names.size() - MAX_NAMES_SHOWN;
+        return String.join(", ", names.subList(0, MAX_NAMES_SHOWN)) + ", ... and " + remaining + " more";
     }
 }
