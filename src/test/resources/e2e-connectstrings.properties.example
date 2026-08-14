@@ -1,8 +1,8 @@
 # This is a template for the henplus.e2e end-to-end test suite
-# (E2EConnectionsIT, E2EDiscoveryIT) that connects to real databases to
-# confirm the JDBC drivers declared in pom.xml actually work. It's a
-# template, not the real thing: it lives in this repository under version
-# control, so it must never contain real credentials.
+# (E2EConnectionsIT, E2EDiscoveryIT, E2EDestructiveIT) that connects to real
+# databases to confirm the JDBC drivers declared in pom.xml actually work.
+# It's a template, not the real thing: it lives in this repository under
+# version control, so it must never contain real credentials.
 #
 # To use it:
 #
@@ -29,6 +29,38 @@
 # Format: for each target, "<name>.url" is required; "<name>.username" and
 # "<name>.password" are optional (e.g. SQLite needs neither). <name> can be
 # anything - it's just a label, shown as the test name in the report.
+#
+# --- Destructive testing (E2EDestructiveIT) ---
+#
+# E2EDestructiveIT runs a real create table/index/view -> insert -> dump-out
+# -> delete -> dump-in -> count -> drop round trip through henplus's own
+# dump-out/dump-in commands. It only runs against a target if BOTH of these
+# are true - either one missing skips it cleanly, no build failure:
+#
+#   1. That target's ".url" is connected to a database literally named
+#      "e2e-destructive" - checked live via the driver's own
+#      Connection.getCatalog(), not string-parsed from the URL. This is NOT
+#      created for you: connecting to a database that doesn't exist yet
+#      fails before any test code runs, and "CREATE DATABASE" isn't portable
+#      enough across drivers to automate (Oracle has no real equivalent;
+#      SQLite's file just gets created automatically, so this doesn't apply
+#      to it at all). Create it by hand once, e.g. for Postgres:
+#
+#        CREATE DATABASE "e2e-destructive";
+#
+#      (the quotes are required - "e2e-destructive" has a hyphen, which
+#      isn't a valid unquoted SQL identifier character).
+#
+#   2. "<name>.destructive=true" is set for that target - a second,
+#      independent opt-in, so a correctly-named database alone is never
+#      enough by accident.
+#
+# e.g.:
+#
+#   postgres_destructive.url=jdbc:postgresql://localhost:5432/e2e-destructive
+#   postgres_destructive.username=postgres
+#   postgres_destructive.password=secret
+#   postgres_destructive.destructive=true
 
 # PostgreSQL - https://jdbc.postgresql.org/documentation/use/#connection-parameters
 # NOTE: a Postgres connection is scoped to exactly one *database* (the last

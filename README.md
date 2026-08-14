@@ -148,6 +148,14 @@ confirm the JDBC drivers actually work:
   whatever schemas/tables/views/indexes already exist. It's read-only: nothing is created, modified or
   dropped, and it only asserts that discovery itself doesn't error, not any particular content, since
   what's actually there depends on the database you point it at.
+* `E2EDestructiveIT` actually exercises henplus's own `dump-out`/`dump-in` commands (through
+  `HenPlusHarness`, driving the real `Command` implementations - not raw JDBC) in a full create table/
+  index/view -> insert -> dump-out -> delete -> dump-in -> count -> drop round trip. Unlike the other two,
+  this one is genuinely destructive, so it's gated behind two independent opt-ins: the target's `.url`
+  must be connected to a database literally named `e2e-destructive` (checked live via
+  `Connection.getCatalog()`), *and* that target needs `<name>.destructive=true` set. Either missing skips
+  it cleanly. See the template for the full explanation and the required one-time
+  `CREATE DATABASE "e2e-destructive";` setup - it can't be created automatically.
 
 Since this needs real credentials, they're read from a properties file that lives outside this
 repository, at `~/.config/henplus/e2e-connectstrings.properties`, and are never committed. If this file
