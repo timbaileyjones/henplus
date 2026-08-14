@@ -623,6 +623,19 @@ public final class HenPlus implements Interruptable {
         return instance;
     }
 
+    /**
+     * Test-only: builds a headless instance and installs it as the singleton, skipping the interactive
+     * {@link #init(String[])} entirely - no JLine/terminal setup, no signal handler, no ~/.henplus config-dir access. Lets
+     * test code drive real {@link Command} implementations (e.g. DumpCommand's dump-out/dump-in) the same way the
+     * interactive shell does, without pulling in any of that. See henplus.HenPlusHarness.
+     */
+    static HenPlus forTesting(final OutputDevice out, final OutputDevice err) throws IOException {
+        instance = new HenPlus();
+        instance._sessionManager = SessionManager.getInstance();
+        instance.setOutput(out, err);
+        return instance;
+    }
+
     public void setOutput(final OutputDevice out, final OutputDevice msg) {
         _output = out;
         _msg = msg;

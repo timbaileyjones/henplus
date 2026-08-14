@@ -21,7 +21,8 @@ import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 /**
  * Loads end-to-end database targets from a properties file that deliberately lives outside this repository, so real
  * credentials never get committed. Each target is a group of "&lt;name&gt;.url" (required), "&lt;name&gt;.username" and
- * "&lt;name&gt;.password" (both optional - e.g. SQLite needs neither) keys, e.g.:
+ * "&lt;name&gt;.password" (both optional - e.g. SQLite needs neither) keys, plus an optional "&lt;name&gt;.destructive"
+ * flag (see {@link E2EDestructiveIT}), e.g.:
  *
  * <pre>
  * postgres.url=jdbc:postgresql://localhost:5432/postgres
@@ -41,12 +42,16 @@ public final class E2EConfig {
         public final String url;
         public final String username;
         public final String password;
+        /** From "&lt;name&gt;.destructive" - required (alongside the "e2e-destructive" catalog-name check
+         * E2EDestructiveIT does separately) before any destructive operation runs against this target. */
+        public final boolean destructive;
 
-        Target(final String name, final String url, final String username, final String password) {
+        Target(final String name, final String url, final String username, final String password, final boolean destructive) {
             this.name = name;
             this.url = url;
             this.username = username;
             this.password = password;
+            this.destructive = destructive;
         }
     }
 
@@ -80,7 +85,7 @@ public final class E2EConfig {
         final List<Target> result = new ArrayList<>();
         for (final String name : names) {
             result.add(new Target(name, props.getProperty(name + ".url"), props.getProperty(name + ".username"),
-                    props.getProperty(name + ".password")));
+                    props.getProperty(name + ".password"), Boolean.parseBoolean(props.getProperty(name + ".destructive"))));
         }
         return new E2EConfig(result);
     }
